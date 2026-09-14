@@ -1,6 +1,8 @@
 package com.example.phylax.ui.screens.auth
 
 import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -34,6 +36,16 @@ fun OTPVerificationScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    // Helper to find Activity
+    fun findActivity(context: Context): Activity? {
+        var currentContext = context
+        while (currentContext is ContextWrapper) {
+            if (currentContext is Activity) return currentContext
+            currentContext = currentContext.baseContext
+        }
+        return null
+    }
 
     LaunchedEffect(ticks) {
         if (ticks > 0) {
@@ -135,7 +147,12 @@ fun OTPVerificationScreen(
             } else {
                 TextButton(
                     onClick = {
-                        viewModel.onEvent(AuthUserEvent.ResendOtp(phoneNumber, context as Activity))
+                        val activity = findActivity(context)
+                        if (activity != null) {
+                            viewModel.onEvent(AuthUserEvent.ResendOtp(phoneNumber, activity))
+                        } else {
+                            scope.launch { snackbarHostState.showSnackbar("Unable to resend code") }
+                        }
                     },
                     enabled = !viewModel.uiState.isLoading
                 ) {

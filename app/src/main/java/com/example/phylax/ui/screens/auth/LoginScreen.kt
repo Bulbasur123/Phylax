@@ -11,16 +11,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import com.example.phylax.ui.components.PremiumButton
 import com.example.phylax.ui.components.PremiumTextField
-import com.example.phylax.ui.theme.Background
-import com.example.phylax.ui.theme.PrimaryText
+import com.example.phylax.ui.theme.*
+
+import androidx.compose.ui.unit.sp
+import com.example.phylax.ui.theme.*
 
 @Composable
 fun LoginScreen(
@@ -33,7 +35,6 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     
-    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -48,59 +49,63 @@ fun LoginScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Background
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Background)
                 .padding(innerPadding)
-                .padding(24.dp)
+                .padding(horizontal = 24.dp)
         ) {
+            Spacer(modifier = Modifier.height(60.dp))
+
             Text(
                 text = "Welcome Back",
-                style = MaterialTheme.typography.headlineMedium.copy(
+                style = MaterialTheme.typography.headlineLarge.copy(
                     color = PrimaryText,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
             )
             
             Text(
-                text = "Log in with your email and password",
-                style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)
+                text = "Sign in to your Phylax account",
+                style = MaterialTheme.typography.bodyLarge.copy(color = SecondaryText)
             )
             
             Spacer(modifier = Modifier.height(48.dp))
             
-            PremiumTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = "Email Address",
-                icon = Icons.Default.Email,
-                keyboardType = KeyboardType.Email
-            )
-            
-            PremiumTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = "Password",
-                icon = Icons.Default.Lock,
-                isPassword = true,
-                passwordVisible = passwordVisible,
-                onTogglePassword = { passwordVisible = !passwordVisible }
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                PremiumTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = "Email Address",
+                    icon = Icons.Default.Email,
+                    keyboardType = KeyboardType.Email
+                )
+                
+                PremiumTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = "Password",
+                    icon = Icons.Default.Lock,
+                    isPassword = true,
+                    passwordVisible = passwordVisible,
+                    onTogglePassword = { passwordVisible = !passwordVisible }
+                )
+            }
 
             TextButton(
                 onClick = onForgotPasswordClick,
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Forgot Password?", color = PrimaryText)
+                Text("Forgot Password?", color = iOSBlue, fontWeight = FontWeight.SemiBold)
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             
             PremiumButton(
-                text = "LOG IN",
+                text = "Log In",
                 onClick = {
                     if (email.isNotEmpty() && password.isNotEmpty()) {
                         viewModel.onEvent(AuthUserEvent.LoginWithEmail(email, password))
@@ -111,15 +116,18 @@ fun LoginScreen(
                 enabled = !viewModel.uiState.isLoading
             )
             
+            Spacer(modifier = Modifier.height(16.dp))
+
             TextButton(
                 onClick = onRegisterClick,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text("NEW TO PHYLAX? CREATE ACCOUNT", color = PrimaryText)
+                Text("NEW TO PHYLAX? CREATE ACCOUNT", color = iOSBlue, fontWeight = FontWeight.Bold)
             }
             
             if (viewModel.uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                Spacer(modifier = Modifier.height(16.dp))
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = iOSBlue)
             }
         }
     }

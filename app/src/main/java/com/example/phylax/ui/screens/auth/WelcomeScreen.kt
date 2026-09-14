@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -14,9 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.phylax.ui.components.PhylaxShield
 import com.example.phylax.ui.components.PremiumButton
-import com.example.phylax.ui.theme.Background
-import com.example.phylax.ui.theme.PrimaryText
-import com.example.phylax.ui.theme.SecondaryText
+import com.example.phylax.ui.theme.*
 
 @Composable
 fun WelcomeScreen(
@@ -25,48 +24,59 @@ fun WelcomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Background)
-            .padding(24.dp),
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color.White, Background)
+                )
+            )
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        PhylaxShield(size = 180.dp)
-        
-        Spacer(modifier = Modifier.height(48.dp))
-        
-        Text(
-            text = "Phylax",
-            style = MaterialTheme.typography.headlineLarge.copy(
-                color = PrimaryText,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 2.sp
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            PhylaxShield(size = 140.dp)
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = "Phylax",
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    color = PrimaryText,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 40.sp
+                )
             )
-        )
-        
-        Text(
-            text = "Your safety, one tap away.",
-            style = MaterialTheme.typography.bodyLarge.copy(
-                color = SecondaryText,
-                fontWeight = FontWeight.Medium
+
+            Text(
+                text = "Your safety, one tap away.",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = SecondaryText,
+                    fontWeight = FontWeight.Medium
+                )
             )
-        )
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        Text(
-            text = "Quickly alert your loved ones, share your location, and get attention when you need help.",
-            style = MaterialTheme.typography.bodyLarge.copy(
-                color = SecondaryText,
-                textAlign = TextAlign.Center
-            ),
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        
-        Spacer(modifier = Modifier.height(64.dp))
-        
-        PremiumButton(
-            text = "GET STARTED",
-            onClick = onGetStarted
-        )
+        }
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "Quickly alert your loved ones, share your location, and get attention when you need help.",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = SecondaryText,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
+                ),
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            PremiumButton(
+                text = "Get Started",
+                onClick = onGetStarted
+            )
+            
+            Spacer(modifier = Modifier.height(20.dp))
+        }
     }
 }

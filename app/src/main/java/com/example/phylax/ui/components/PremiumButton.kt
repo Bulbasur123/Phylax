@@ -13,16 +13,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.phylax.ui.theme.EmergencyGradientEnd
-import com.example.phylax.ui.theme.EmergencyGradientStart
-import com.example.phylax.ui.theme.LocationBlue
-import com.example.phylax.ui.theme.VioletAccent
+import com.example.phylax.ui.theme.iOSBlue
+import com.example.phylax.ui.theme.iOSRed
 
 @Composable
 fun PremiumButton(
@@ -32,20 +29,14 @@ fun PremiumButton(
     isEmergency: Boolean = false,
     enabled: Boolean = true
 ) {
-    val brush = if (isEmergency) {
-        Brush.horizontalGradient(listOf(EmergencyGradientStart, EmergencyGradientEnd))
-    } else {
-        Brush.horizontalGradient(listOf(LocationBlue, VioletAccent))
-    }
-
-    val disabledBrush = SolidColor(Color.Gray.copy(alpha = 0.3f))
+    val color = if (isEmergency) iOSRed else iOSBlue
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(if (enabled) brush else disabledBrush)
+            .height(52.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (enabled) color else Color.Gray.copy(alpha = 0.3f))
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 24.dp),
         contentAlignment = Alignment.Center
@@ -55,7 +46,7 @@ fun PremiumButton(
             color = Color.White,
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
+                fontSize = 17.sp
             )
         )
     }

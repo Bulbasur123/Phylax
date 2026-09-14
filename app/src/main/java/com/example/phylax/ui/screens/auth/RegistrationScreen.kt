@@ -1,6 +1,8 @@
 package com.example.phylax.ui.screens.auth
 
 import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -27,9 +29,7 @@ import kotlinx.coroutines.launch
 import com.example.phylax.data.model.User
 import com.example.phylax.ui.components.PremiumButton
 import com.example.phylax.ui.components.PremiumTextField
-import com.example.phylax.ui.theme.Background
-import com.example.phylax.ui.theme.BorderColor
-import com.example.phylax.ui.theme.PrimaryText
+import com.example.phylax.ui.theme.*
 
 @Composable
 fun RegistrationScreen(
@@ -48,13 +48,20 @@ fun RegistrationScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    // Helper to find Activity
+    fun findActivity(context: Context): Activity? {
+        var currentContext = context
+        while (currentContext is ContextWrapper) {
+            if (currentContext is Activity) return currentContext
+            currentContext = currentContext.baseContext
+        }
+        return null
+    }
+
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 is AuthEvent.OtpSent -> onOtpSent(event.phoneNumber)
-                is AuthEvent.AuthSuccess -> {
-                    // This will now be handled after OTP verification
-                }
                 is AuthEvent.Error -> snackbarHostState.showSnackbar(event.message)
                 else -> {}
             }
@@ -62,76 +69,84 @@ fun RegistrationScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Background
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Background)
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(24.dp)
+                .padding(horizontal = 24.dp)
         ) {
+            Spacer(modifier = Modifier.height(40.dp))
+
             Text(
                 text = "Create Account",
-                style = MaterialTheme.typography.headlineMedium.copy(
+                style = MaterialTheme.typography.headlineLarge.copy(
                     color = PrimaryText,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
             )
             
             Text(
-                text = "Join Phylax for your safety",
-                style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)
+                text = "Join Phylax to stay protected",
+                style = MaterialTheme.typography.bodyLarge.copy(color = SecondaryText)
             )
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp))
             
-            PremiumTextField(value = name, onValueChange = { name = it }, label = "Full Name", icon = Icons.Default.Person)
-            PremiumTextField(
-                value = phone, 
-                onValueChange = { 
-                    if (it.length <= 11 && it.all { char -> char.isDigit() }) {
-                        phone = it 
-                    }
-                }, 
-                label = "Phone Number", 
-                icon = Icons.Default.Phone, 
-                keyboardType = KeyboardType.Phone
-            )
-            PremiumTextField(value = email, onValueChange = { email = it }, label = "Email", icon = Icons.Default.Email, keyboardType = KeyboardType.Email)
+            // iOS Style Stacked Inputs
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                PremiumTextField(value = name, onValueChange = { name = it }, label = "Full Name", icon = Icons.Default.Person)
+                PremiumTextField(
+                    value = phone, 
+                    onValueChange = { 
+                        if (it.length <= 11 && it.all { char -> char.isDigit() }) {
+                            phone = it 
+                        }
+                    }, 
+                    label = "Phone Number", 
+                    icon = Icons.Default.Phone, 
+                    keyboardType = KeyboardType.Phone
+                )
+                PremiumTextField(value = email, onValueChange = { email = it }, label = "Email", icon = Icons.Default.Email, keyboardType = KeyboardType.Email)
+                
+                PremiumTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = "Password",
+                    icon = Icons.Default.Lock,
+                    isPassword = true,
+                    passwordVisible = passwordVisible,
+                    onTogglePassword = { passwordVisible = !passwordVisible }
+                )
+                
+                PremiumTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = "Confirm Password",
+                    icon = Icons.Default.Lock,
+                    isPassword = true,
+                    passwordVisible = passwordVisible,
+                    onTogglePassword = { passwordVisible = !passwordVisible }
+                )
+            }
             
-            PremiumTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = "Password",
-                icon = Icons.Default.Lock,
-                isPassword = true,
-                passwordVisible = passwordVisible,
-                onTogglePassword = { passwordVisible = !passwordVisible }
-            )
-            
-            PremiumTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                label = "Confirm Password",
-                icon = Icons.Default.Lock,
-                isPassword = true,
-                passwordVisible = passwordVisible,
-                onTogglePassword = { passwordVisible = !passwordVisible }
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(48.dp))
             
             PremiumButton(
-                text = "CREATE ACCOUNT",
+                text = "Create Account",
                 onClick = {
                     if (name.isNotEmpty() && phone.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty()) {
                         if (password == confirmPassword) {
                             val user = User(name = name, phone = phone, email = email)
-                            // Start by sending OTP. Store password in a custom event if needed, 
-                            // but for now we store it in the ViewModel's pending state.
-                            viewModel.onEvent(AuthUserEvent.SendOtp(phone, context as Activity, user, password))
+                            val activity = findActivity(context)
+                            if (activity != null) {
+                                viewModel.onEvent(AuthUserEvent.SendOtp(phone, activity, user, password))
+                            } else {
+                                scope.launch { snackbarHostState.showSnackbar("Unable to start verification") }
+                            }
                         } else {
                             scope.launch { snackbarHostState.showSnackbar("Passwords do not match") }
                         }
@@ -142,15 +157,18 @@ fun RegistrationScreen(
                 enabled = !viewModel.uiState.isLoading
             )
             
+            Spacer(modifier = Modifier.height(16.dp))
+
             TextButton(
                 onClick = onLoginClick,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text("ALREADY HAVE AN ACCOUNT? LOG IN", color = PrimaryText)
+                Text("ALREADY HAVE AN ACCOUNT? LOG IN", color = iOSBlue, fontWeight = FontWeight.Bold)
             }
             
             if (viewModel.uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                Spacer(modifier = Modifier.height(16.dp))
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = iOSBlue)
             }
         }
     }

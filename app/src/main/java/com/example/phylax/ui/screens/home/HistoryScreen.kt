@@ -1,9 +1,11 @@
 package com.example.phylax.ui.screens.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -33,43 +35,53 @@ fun HistoryScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Background)
-            .padding(24.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Spacer(modifier = Modifier.statusBarsPadding())
+        
+        // iOS 18 Style Header
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = PrimaryText)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = iOSBlue)
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "Emergency History",
-                style = MaterialTheme.typography.headlineMedium.copy(
+                text = "History",
+                style = MaterialTheme.typography.headlineLarge.copy(
                     color = PrimaryText,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
             )
         }
         
-        Spacer(modifier = Modifier.height(24.dp))
-        
         if (uiState.isLoading && uiState.sessions.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = LocationBlue)
+                CircularProgressIndicator(color = iOSBlue)
             }
         } else if (uiState.sessions.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No history found", color = SecondaryText)
+                Text("No alert history", color = SecondaryText)
             }
         } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            // iOS Inset Grouped Style for the list
+            Surface(
+                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = Color.White,
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.Black.copy(alpha = 0.05f))
             ) {
-                items(uiState.sessions) { session ->
-                    HistoryItem(
-                        session = session, 
-                        onClick = { onRecordClick(session) },
-                        onEditNote = { sessionToEdit = session },
-                        onDelete = { viewModel.deleteRecord(session.id) }
-                    )
+                LazyColumn {
+                    itemsIndexed(uiState.sessions) { index, session ->
+                        HistoryItem(
+                            session = session, 
+                            onClick = { onRecordClick(session) },
+                            onEditNote = { sessionToEdit = session },
+                            onDelete = { viewModel.deleteRecord(session.id) },
+                            isLast = index == uiState.sessions.size - 1
+                        )
+                    }
                 }
             }
         }
@@ -92,28 +104,27 @@ fun HistoryItem(
     session: EmergencySession, 
     onClick: () -> Unit,
     onEditNote: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    isLast: Boolean
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val dateFormat = SimpleDateFormat("MMM d — h:mm a", Locale.getDefault())
     val dateString = dateFormat.format(Date(session.startedAt))
 
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
-        onClick = onClick
-    ) {
+    Column {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                modifier = Modifier.size(48.dp),
-                shape = MaterialTheme.shapes.medium,
-                color = EmergencyRed.copy(alpha = 0.1f)
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(10.dp),
+                color = iOSRed.copy(alpha = 0.1f)
             ) {
-                Icon(Icons.Default.Warning, contentDescription = null, modifier = Modifier.padding(12.dp), tint = EmergencyRed)
+                Icon(Icons.Default.Warning, contentDescription = null, modifier = Modifier.padding(8.dp), tint = iOSRed)
             }
             
             Spacer(modifier = Modifier.width(16.dp))
@@ -121,42 +132,40 @@ fun HistoryItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = if (session.note.isNotEmpty()) session.note else "Emergency Alert", 
-                    style = MaterialTheme.typography.titleMedium.copy(color = PrimaryText, fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.bodyLarge.copy(color = PrimaryText, fontWeight = FontWeight.SemiBold)
                 )
-                Text(text = dateString, style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText))
-                if (session.status == "ENDED") {
-                    val duration = (session.endedAt ?: session.startedAt) - session.startedAt
-                    val minutes = duration / (1000 * 60)
-                    Text(text = "Resolved after $minutes minutes", style = MaterialTheme.typography.bodyMedium.copy(color = SecondaryText))
-                }
+                Text(text = dateString, style = MaterialTheme.typography.labelMedium.copy(color = SecondaryText))
             }
             
-            Box {
-                IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                }
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Edit Title/Note") },
-                        onClick = {
-                            showMenu = false
-                            onEditNote()
-                        },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Delete", color = EmergencyRed) },
-                        onClick = {
-                            showMenu = false
-                            onDelete()
-                        },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = EmergencyRed) }
-                    )
-                }
+            IconButton(onClick = { showMenu = true }) {
+                Icon(Icons.Default.MoreHoriz, contentDescription = "Menu", tint = Color.LightGray)
             }
+            
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Edit Note") },
+                    onClick = {
+                        showMenu = false
+                        onEditNote()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Delete", color = iOSRed) },
+                    onClick = {
+                        showMenu = false
+                        onDelete()
+                    }
+                )
+            }
+        }
+        if (!isLast) {
+            HorizontalDivider(
+                modifier = Modifier.padding(start = 72.dp),
+                color = Color.Black.copy(alpha = 0.05f)
+            )
         }
     }
 }

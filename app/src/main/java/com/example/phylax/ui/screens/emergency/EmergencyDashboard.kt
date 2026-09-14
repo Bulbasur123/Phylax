@@ -2,8 +2,11 @@ package com.example.phylax.ui.screens.emergency
 
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,8 +17,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import com.example.phylax.ui.components.PremiumButton
 import com.example.phylax.ui.theme.*
 import com.example.phylax.service.SOSService
 import kotlinx.coroutines.delay
@@ -30,7 +33,6 @@ fun EmergencyDashboard(
     var timerSeconds by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
-        // Start SOS Service
         val intent = Intent(context, SOSService::class.java).apply {
             action = SOSService.ACTION_START_SOS
             putExtra(SOSService.EXTRA_USER_ID, userId)
@@ -50,116 +52,173 @@ fun EmergencyDashboard(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Background)
-            .padding(24.dp)
+            .background(iOSRed) // Urgency Red
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "ALERT SENT",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    color = EmergencyRed,
-                    fontWeight = FontWeight.Black
-                )
+        Spacer(modifier = Modifier.statusBarsPadding())
+
+        Text(
+            text = "SOS ALERT ACTIVE",
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = Color.White.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
             )
-            Text(
-                text = "Your emergency contacts have been notified.",
-                style = MaterialTheme.typography.bodyLarge.copy(color = SecondaryText)
+        )
+        
+        Text(
+            text = timeString,
+            style = MaterialTheme.typography.headlineLarge.copy(
+                color = Color.White,
+                fontSize = 56.sp,
+                fontWeight = FontWeight.ExtraBold
+            ),
+            modifier = Modifier.padding(vertical = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        // iOS Style Status Info
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            EmergencyStatusRow(
+                title = "Live Location",
+                status = "Sharing",
+                icon = Icons.Default.ShareLocation
+            )
+            EmergencyStatusRow(
+                title = "Emergency Siren",
+                status = "Active",
+                icon = Icons.Default.NotificationsActive
             )
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        EmergencyStatusCard(
-            title = "Live Location",
-            status = "SHARING",
-            icon = Icons.Default.ShareLocation,
-            color = SuccessGreen
-        )
-        
-        EmergencyStatusCard(
-            title = "Loud Alarm",
-            status = "ON",
-            icon = Icons.Default.Notifications,
-            color = EmergencyRed
-        )
-        
-        EmergencyStatusCard(
-            title = "Emergency Timer",
-            status = timeString,
-            icon = Icons.Default.Schedule,
-            color = PrimaryText
-        )
-        
+
         Spacer(modifier = Modifier.weight(1f))
-        
-        PremiumButton(
-            text = "STOP ALARM",
-            onClick = {},
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        
-        PremiumButton(
-            text = "VIEW LIVE LOCATION",
-            onClick = onViewMap,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        
-        PremiumButton(
-            text = "STOP SOS SESSION",
-            onClick = {
-                // Stop SOS Service
-                val intent = Intent(context, SOSService::class.java).apply {
-                    action = SOSService.ACTION_STOP_SOS
+
+        // Actions
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            EmergencyActionButton(
+                text = "Emergency Services",
+                icon = Icons.Default.Phone,
+                color = Color.White,
+                contentColor = iOSRed,
+                onClick = {}
+            )
+            
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                EmergencyActionSquare(
+                    icon = Icons.Default.Map,
+                    label = "Map",
+                    onClick = onViewMap,
+                    modifier = Modifier.weight(1f)
+                )
+                EmergencyActionSquare(
+                    icon = Icons.AutoMirrored.Filled.Chat,
+                    label = "Chat",
+                    onClick = {},
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .clickable {
+                        val stopIntent = Intent(context, SOSService::class.java).apply {
+                            action = SOSService.ACTION_STOP_SOS
+                        }
+                        context.startService(stopIntent)
+                        onStopSOS()
+                    },
+                shape = RoundedCornerShape(20.dp),
+                color = Color.Black.copy(alpha = 0.2f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "STOP EMERGENCY SESSION",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
                 }
-                context.startService(intent)
-                onStopSOS()
-            },
-            isEmergency = true
-        )
-        
-        Button(
-            onClick = {},
-            modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = EmergencyRed),
-            border = androidx.compose.foundation.BorderStroke(1.dp, EmergencyRed),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Icon(Icons.Default.Phone, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("CALL EMERGENCY SERVICES", fontWeight = FontWeight.Bold)
+            }
         }
+        
+        Spacer(modifier = Modifier.navigationBarsPadding())
     }
 }
 
 @Composable
-fun EmergencyStatusCard(title: String, status: String, icon: ImageVector, color: Color) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
+fun EmergencyStatusRow(title: String, status: String, icon: ImageVector) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White.copy(alpha = 0.15f),
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f))
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                shape = MaterialTheme.shapes.small,
-                color = color.copy(alpha = 0.1f)
-            ) {
-                Icon(icon, contentDescription = null, modifier = Modifier.padding(8.dp), tint = color)
-            }
-            
+            Icon(icon, contentDescription = null, tint = Color.White)
             Spacer(modifier = Modifier.width(16.dp))
-            
-            Text(text = title, style = MaterialTheme.typography.titleMedium.copy(color = PrimaryText, fontWeight = FontWeight.SemiBold))
-            
+            Text(text = title, color = Color.White, style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.weight(1f))
-            
-            Text(text = status, style = MaterialTheme.typography.titleMedium.copy(color = color, fontWeight = FontWeight.Black))
+            Text(text = status, color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+@Composable
+fun EmergencyActionButton(
+    text: String,
+    icon: ImageVector,
+    color: Color,
+    contentColor: Color,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().height(60.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = color,
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, contentDescription = null, tint = contentColor)
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(text = text, color = contentColor, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+        }
+    }
+}
+
+@Composable
+fun EmergencyActionSquare(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.height(80.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = Color.White.copy(alpha = 0.2f),
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
+        onClick = onClick
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = Color.White)
+            Text(text = label, color = Color.White, style = MaterialTheme.typography.labelMedium)
         }
     }
 }

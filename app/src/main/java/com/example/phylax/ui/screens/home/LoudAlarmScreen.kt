@@ -71,13 +71,13 @@ fun LoudAlarmScreen(
                 modifier = Modifier
                     .size(200.dp)
                     .scale(scale)
-                    .background(EmergencyRed.copy(alpha = 0.1f), CircleShape)
+                    .background(color = iOSRed.copy(alpha = 0.1f), shape = CircleShape)
             )
             Box(
                 modifier = Modifier
                     .size(150.dp)
                     .scale(scale * 0.8f)
-                    .background(EmergencyRed.copy(alpha = 0.2f), CircleShape)
+                    .background(color = iOSRed.copy(alpha = 0.2f), shape = CircleShape)
             )
 
             Surface(

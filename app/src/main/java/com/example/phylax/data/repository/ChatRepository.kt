@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 
 class ChatRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -31,11 +32,13 @@ class ChatRepository(
 
     suspend fun sendMessage(chatId: String, message: ChatMessage): Result<Unit> {
         return try {
-            val doc = firestore.collection("chats")
-                .document(chatId)
-                .collection("messages")
-                .document()
-            doc.set(message.copy(id = doc.id)).await()
+            withTimeout(10000) {
+                val doc = firestore.collection("chats")
+                    .document(chatId)
+                    .collection("messages")
+                    .document()
+                doc.set(message.copy(id = doc.id)).await()
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

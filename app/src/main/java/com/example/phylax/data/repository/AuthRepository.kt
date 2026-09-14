@@ -90,8 +90,10 @@ class AuthRepository(
         return try {
             val result = auth.signInWithEmailAndPassword(email, password).await()
             val uid = result.user?.uid ?: ""
-            val doc = firestore.collection("users").document(uid).get().await()
-            val user = doc.toObject(User::class.java) ?: throw Exception("User profile not found")
+            val user = withTimeout(10000) {
+                val doc = firestore.collection("users").document(uid).get().await()
+                doc.toObject(User::class.java) ?: throw Exception("User profile not found")
+            }
             Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)

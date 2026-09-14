@@ -28,162 +28,141 @@ fun HomeScreen(
     onNavigateToContacts: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToAlarm: () -> Unit
+    onNavigateToAlarm: () -> Unit,
+    onNavigateToLocation: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Background)
+            .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState())
-            .padding(24.dp)
     ) {
-        // Header
+        Spacer(modifier = Modifier.statusBarsPadding())
+        
+        // iOS 18 Style Large Title
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
                 Text(
-                    text = "Good evening 👋",
-                    style = MaterialTheme.typography.headlineSmall.copy(
+                    text = "Phylax",
+                    style = MaterialTheme.typography.headlineLarge.copy(
                         color = PrimaryText,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                 )
                 Text(
-                    text = "Stay safe, always.",
+                    text = "Your safety dashboard",
                     style = MaterialTheme.typography.bodyLarge.copy(color = SecondaryText)
                 )
             }
             
             Surface(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(44.dp),
                 shape = CircleShape,
                 color = Color.White,
-                shadowElevation = 4.dp,
-                onClick = onNavigateToSettings
+                onClick = onNavigateToSettings,
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.Black.copy(alpha = 0.05f))
             ) {
-                // Avatar placeholder
                 Box(contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.Person, contentDescription = null, tint = SecondaryText)
                 }
             }
         }
-        
+
         Spacer(modifier = Modifier.height(32.dp))
         
-        // Location Status Card
+        // Location Status (iOS Style Inset Card)
         StatusCard()
         
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(40.dp))
         
-        // SOS Area
-        Column(
+        // SOS Button Center
+        Box(
             modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            contentAlignment = Alignment.Center
         ) {
             SOSButton(
-                onActivated = onNavigateToSOS,
-                onProgress = {}
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = "PRESS & HOLD",
-                style = MaterialTheme.typography.labelMedium.copy(
-                    color = SecondaryText,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp
-                )
+                onActivated = onNavigateToSOS
             )
         }
         
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(40.dp))
         
-        // Quick Actions
-        Text(
-            text = "Quick Actions",
-            style = MaterialTheme.typography.titleLarge.copy(
-                color = PrimaryText,
-                fontWeight = FontWeight.Bold
-            )
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
+        // iOS 18 Style Control Center Modules
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             ActionCard(
                 title = "Alarm", 
-                subtitle = "Loud Alarm", 
+                subtitle = "Siren", 
                 icon = Icons.Default.Notifications, 
-                color = EmergencyRed, 
+                color = iOSRed, 
                 modifier = Modifier.weight(1f),
                 onClick = onNavigateToAlarm
             )
             ActionCard(
-                title = "Location", 
-                subtitle = "Share", 
+                title = "Live", 
+                subtitle = "Location", 
                 icon = Icons.Default.Place, 
-                color = LocationBlue, 
+                color = iOSBlue, 
                 modifier = Modifier.weight(1f),
-                onClick = { onNavigateToHistory() } // For now, navigate to history or a map view
-            )
-            ActionCard(
-                title = "Contacts", 
-                subtitle = "Emergency", 
-                icon = Icons.Default.Group, 
-                color = VioletAccent, 
-                modifier = Modifier.weight(1f),
-                onClick = onNavigateToContacts
+                onClick = onNavigateToLocation
             )
         }
         
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        ActionCardLarge(
+            title = "Emergency Contacts",
+            subtitle = "Manage your guardians",
+            icon = Icons.Default.Group,
+            color = iOSIndigo,
+            onClick = onNavigateToContacts
+        )
+        
         Spacer(modifier = Modifier.height(32.dp))
         
-        // Safety Status Card
+        // Bottom Utility Bar (iOS style)
         SafetyCheckCard()
+        
+        Spacer(modifier = Modifier.height(40.dp).navigationBarsPadding())
     }
 }
 
 @Composable
 fun StatusCard() {
-    ElevatedCard(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
+        shape = RoundedCornerShape(20.dp),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.Black.copy(alpha = 0.05f))
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val infiniteTransition = rememberInfiniteTransition(label = "status")
-            val alpha by infiniteTransition.animateFloat(
-                initialValue = 1f,
-                targetValue = 0.4f,
-                animationSpec = infiniteRepeatable(animation = tween(1000), repeatMode = RepeatMode.Reverse),
-                label = "alpha"
-            )
-            
             Box(
                 modifier = Modifier
-                    .size(12.dp)
-                    .clip(CircleShape)
-                    .background(SuccessGreen.copy(alpha = alpha))
+                    .size(10.dp)
+                    .background(iOSGreen, CircleShape)
             )
-            
             Spacer(modifier = Modifier.width(12.dp))
-            
             Text(
-                text = "Location Sharing ON",
-                style = MaterialTheme.typography.bodyMedium.copy(
+                text = "System Protected",
+                style = MaterialTheme.typography.bodyLarge.copy(
                     color = PrimaryText,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold
                 )
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = "LIVE",
+                style = MaterialTheme.typography.labelMedium.copy(color = iOSGreen, fontWeight = FontWeight.Bold)
             )
         }
     }
@@ -198,43 +177,78 @@ fun ActionCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    ElevatedCard(
-        modifier = modifier.height(140.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
-        onClick = onClick
+    Surface(
+        modifier = modifier.height(110.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = Color.White,
+        onClick = onClick,
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.Black.copy(alpha = 0.05f))
     ) {
         Column(
-            modifier = Modifier.padding(16.dp).fillMaxSize(),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = color.copy(alpha = 0.1f)
-            ) {
-                Icon(icon, contentDescription = null, modifier = Modifier.padding(8.dp), tint = color)
-            }
-            
+            Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp), tint = color)
             Column {
-                Text(text = title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-                Text(text = subtitle, style = MaterialTheme.typography.bodySmall.copy(color = SecondaryText))
+                Text(text = title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, fontSize = 16.sp))
+                Text(text = subtitle, style = MaterialTheme.typography.labelMedium.copy(color = SecondaryText))
             }
         }
     }
 }
 
 @Composable
+fun ActionCardLarge(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    color: Color,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().height(80.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = Color.White,
+        onClick = onClick,
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.Black.copy(alpha = 0.05f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = RoundedCornerShape(14.dp),
+                color = color.copy(alpha = 0.1f)
+            ) {
+                Icon(icon, contentDescription = null, modifier = Modifier.padding(12.dp), tint = color)
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, fontSize = 17.sp))
+                Text(text = subtitle, style = MaterialTheme.typography.labelMedium.copy(color = SecondaryText))
+            }
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color.LightGray
+            )
+        }
+    }
+}
+
+@Composable
 fun SafetyCheckCard() {
-    ElevatedCard(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
+        shape = RoundedCornerShape(24.dp),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.Black.copy(alpha = 0.05f))
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
-                text = "You're protected",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                text = "System Protection",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -253,9 +267,9 @@ fun SafetyCheckItem(text: String) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = androidx.compose.material.icons.Icons.Default.Check,
+            imageVector = Icons.Default.Check,
             contentDescription = null,
-            tint = SuccessGreen,
+            tint = iOSGreen,
             modifier = Modifier.size(16.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))

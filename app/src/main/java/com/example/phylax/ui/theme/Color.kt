@@ -2,25 +2,28 @@ package com.example.phylax.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Premium White Palette
-val Background = Color(0xFFF8F9FC)
+// iOS 18 System Backgrounds
+val Background = Color(0xFFF2F2F7) 
 val Surface = Color(0xFFFFFFFF)
-val PrimaryText = Color(0xFF111318)
-val SecondaryText = Color(0xFF687080)
+val PrimaryText = Color(0xFF000000)
+val SecondaryText = Color(0xFF8E8E93)
 
-// Emergency Red
-val EmergencyRed = Color(0xFFFF3B30)
-val DeepEmergencyRed = Color(0xFFD92D20)
+// iOS 18 System Accents (Mapped to existing names)
+val iOSBlue = Color(0xFF007AFF)
+val iOSRed = Color(0xFFFF3B30)
+val iOSGreen = Color(0xFF34C759)
+val iOSIndigo = Color(0xFF5856D6)
+val iOSOrange = Color(0xFFFF9500)
 
-// Location Blue & Accents
-val LocationBlue = Color(0xFF2563EB)
-val CyanAccent = Color(0xFF06B6D4)
-val VioletAccent = Color(0xFF7C3AED)
-val SuccessGreen = Color(0xFF16A34A)
-val BorderColor = Color(0xFFE8EAF0)
+val LocationBlue = iOSBlue
+val EmergencyRed = iOSRed
+val SuccessGreen = iOSGreen
+val VioletAccent = iOSIndigo
+val CyanAccent = Color(0xFF32ADE6)
+val BorderColor = Color(0xFFC6C6C8).copy(alpha = 0.3f)
 
-// Gradients (Decorative)
-val VioletGradientStart = Color(0xFF7C3AED)
-val VioletGradientEnd = Color(0xFFC084FC)
+// Gradients (iOS 18 style)
 val EmergencyGradientStart = Color(0xFFFF3B30)
-val EmergencyGradientEnd = Color(0xFFEF4444)
+val EmergencyGradientEnd = Color(0xFFFF453A)
+val VioletGradientStart = Color(0xFF5856D6)
+val VioletGradientEnd = Color(0xFF7D7AFF)

@@ -94,11 +94,12 @@ fun PhylaxNavHost(
         
         composable(Screen.Home.route) {
             HomeScreen(
-                onNavigateToSOS = { navController.navigate(Screen.SOSActivation.route) },
+                onNavigateToSOS = { navController.navigate(Screen.EmergencyDashboard.route) },
                 onNavigateToContacts = { navController.navigate(Screen.ContactsSetup.route) },
                 onNavigateToHistory = { navController.navigate(Screen.History.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToAlarm = { navController.navigate(Screen.LoudAlarm.route) }
+                onNavigateToAlarm = { navController.navigate(Screen.LoudAlarm.route) },
+                onNavigateToLocation = { navController.navigate(Screen.LiveLocation.route) }
             )
         }
 
@@ -154,8 +155,13 @@ fun PhylaxNavHost(
                 onNavigateToContacts = { navController.navigate(Screen.ContactsSetup.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onNavigateToPermissions = { navController.navigate(Screen.Permissions.route) },
-                onNavigateToSafetySetup = { navController.navigate(Screen.SafetySetup.route) }
+                onNavigateToSafetySetup = { navController.navigate(Screen.SafetySetup.route) },
+                onNavigateToAbout = { navController.navigate(Screen.About.route) }
             ) 
+        }
+
+        composable(Screen.About.route) {
+            AboutScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Screen.Profile.route) {
