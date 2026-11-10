@@ -77,17 +77,23 @@ class EmergencyContactsViewModel(
         viewModelScope.launch {
             uiState = uiState.copy(isLoading = true)
             // 1. Unset old primary
-            uiState.contacts.forEach { contact ->
-                if (contact.isPrimary) {
-                    repository.updateContact(contact.copy(isPrimary = false))
+            val oldPrimary = uiState.contacts.find { it.isPrimary }
+            oldPrimary?.let {
+                repository.updateContact(it.copy(isPrimary = false)).onFailure {
+                    uiState = uiState.copy(isLoading = false, error = it.message)
                 }
             }
             // 2. Set new primary
             val newPrimary = uiState.contacts.find { it.id == contactId }
-            if (newPrimary != null) {
-                repository.updateContact(newPrimary.copy(isPrimary = true))
+            newPrimary?.let {
+                repository.updateContact(it.copy(isPrimary = true)).onSuccess {
+                    loadContacts()
+                }.onFailure {
+                    uiState = uiState.copy(isLoading = false, error = it.message)
+                }
+            } ?: run {
+                loadContacts()
             }
-            loadContacts()
         }
     }
 }

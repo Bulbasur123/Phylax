@@ -1,7 +1,7 @@
 package com.example.phylax.data.model
 
 data class EmergencySession(
-    val id: String = "",
+    val id: String? = null,
     val userId: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
@@ -12,7 +12,7 @@ data class EmergencySession(
 )
 
 data class LocationUpdate(
-    val id: String = "",
+    val id: String? = null,
     val sessionId: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,

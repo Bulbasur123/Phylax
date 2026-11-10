@@ -16,8 +16,7 @@ class EmergencyRepository(
         return try {
             withTimeout(timeout) {
                 val doc = firestore.collection("emergencyContacts").document()
-                firestore.collection("emergencyContacts").document(doc.id)
-                    .set(contact.copy(id = doc.id)).await()
+                doc.set(contact.copy(id = doc.id)).await()
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -52,8 +51,13 @@ class EmergencyRepository(
 
     suspend fun updateContact(contact: EmergencyContact): Result<Unit> {
         return try {
+            val contactId = contact.id ?: return Result.failure(Exception("Contact ID is null"))
             withTimeout(timeout) {
-                firestore.collection("emergencyContacts").document(contact.id).set(contact).await()
+                firestore.collection("emergencyContacts").document(contactId).update(
+                    "name", contact.name,
+                    "phone", contact.phone,
+                    "isPrimary", contact.isPrimary
+                ).await()
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -82,7 +86,7 @@ class EmergencyRepository(
 
     suspend fun updateLocation(sessionId: String, lat: Double, lon: Double): Result<Unit> {
         return try {
-            withTimeout(5000) { // Faster timeout for location
+            withTimeout(timeout) {
                 val update = LocationUpdate(
                     sessionId = sessionId,
                     latitude = lat,
@@ -91,7 +95,7 @@ class EmergencyRepository(
                 firestore.collection("locationUpdates").add(update).await()
                 
                 firestore.collection("emergencySessions").document(sessionId)
-                    .update("latitude", lat, "longitude", lon).await()
+                    .update("latitude", lat, "longitude", lon, "status", "ACTIVE").await()
             }
             Result.success(Unit)
         } catch (e: Exception) {

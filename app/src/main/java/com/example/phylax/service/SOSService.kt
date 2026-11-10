@@ -10,11 +10,11 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
+import android.os.Looper
 import android.telephony.SmsManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.phylax.MainActivity
-import com.example.phylax.R
 import com.example.phylax.data.repository.EmergencyRepository
 import com.google.android.gms.location.*
 import kotlinx.coroutines.*
@@ -25,7 +25,7 @@ class SOSService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
     
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var locationCallback: LocationCallback
+    private var locationCallback: LocationCallback? = null
     private var mediaPlayer: MediaPlayer? = null
     
     private val emergencyRepository = EmergencyRepository()
@@ -63,10 +63,16 @@ class SOSService : Service() {
     private fun startSOS(userId: String) {
         val notification = createNotification("Phylax SOS is Active", "Your location is being shared.")
         
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            Log.e("SOSService", "Unable to start foreground SOS service: ${e.message}")
+            stopSelf()
+            return
         }
 
         serviceScope.launch {
@@ -101,10 +107,10 @@ class SOSService : Service() {
                     val message = "🚨 PHYLAX SOS ALERT!\n" +
                                   "I need help. My current location is:\n" +
                                   "https://www.google.com/maps/search/?api=1&query=$lat,$lon"
-                    
+                  
                     try {
                         val smsManager: SmsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            applicationContext.getSystemService(SmsManager::class.java)
+                            getSystemService(SmsManager::class.java)
                         } else {
                             @Suppress("DEPRECATION")
                             SmsManager.getDefault()
@@ -151,22 +157,30 @@ class SOSService : Service() {
             }
         }
 
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback!!, Looper.getMainLooper())
     }
 
     private fun stopLocationUpdates() {
-        if (::locationCallback.isInitialized) {
-            fusedLocationClient.removeLocationUpdates(locationCallback)
+        locationCallback?.let { callback ->
+            fusedLocationClient.removeLocationUpdates(callback)
         }
+        locationCallback = null
     }
 
     private fun playAlarm() {
-        val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-        
-        mediaPlayer = MediaPlayer.create(this, alarmUri).apply {
-            isLooping = true
-            start()
+        try {
+            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+
+            mediaPlayer = MediaPlayer.create(this, alarmUri)?.apply {
+                isLooping = true
+                start()
+            }
+            if (mediaPlayer == null) {
+                Log.e("SOSService", "Unable to create alarm MediaPlayer")
+            }
+        } catch (e: Exception) {
+            Log.e("SOSService", "Failed to play alarm: ${e.message}")
         }
     }
 
@@ -217,5 +231,7 @@ class SOSService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceJob.cancel()
+        stopLocationUpdates()
+        stopAlarm()
     }
 }

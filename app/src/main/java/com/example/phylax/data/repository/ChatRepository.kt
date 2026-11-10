@@ -21,7 +21,12 @@ class ChatRepository(
             .document(chatId)
             .collection("messages")
             .orderBy("timestamp", Query.Direction.ASCENDING)
-            .addSnapshotListener { snapshot, _ ->
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    // Handle error by closing the flow with exception
+                    close(error)
+                    return@addSnapshotListener
+                }
                 if (snapshot != null) {
                     val messages = snapshot.toObjects(ChatMessage::class.java)
                     trySend(messages)
@@ -30,16 +35,17 @@ class ChatRepository(
         awaitClose { subscription.remove() }
     }
 
-    suspend fun sendMessage(chatId: String, message: ChatMessage): Result<Unit> {
+    suspend fun sendMessage(chatId: String, message: ChatMessage): Result<String> {
         return try {
-            withTimeout(10000) {
+            val messageId = withTimeout(10000) {
                 val doc = firestore.collection("chats")
                     .document(chatId)
                     .collection("messages")
                     .document()
                 doc.set(message.copy(id = doc.id)).await()
+                doc.id
             }
-            Result.success(Unit)
+            Result.success(messageId)
         } catch (e: Exception) {
             Result.failure(e)
         }

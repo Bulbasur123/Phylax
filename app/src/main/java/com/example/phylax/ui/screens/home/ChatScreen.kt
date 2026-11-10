@@ -30,14 +30,27 @@ fun ChatScreen(
     viewModel: ChatViewModel = viewModel()
 ) {
     val uiState = viewModel.uiState
+    val snackbarHostState = remember { SnackbarHostState() }
     var messageText by remember { mutableStateOf("") }
-    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    // The Firebase session UID is authoritative; profile documents may have
+    // been written by older versions without a uid field.
+    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
 
-    LaunchedEffect(otherUserId) {
-        viewModel.initChat(otherUserId)
+    LaunchedEffect(key1 = otherUserId, key2 = currentUserId) {
+        if (currentUserId.isNotBlank()) {
+            viewModel.initChat(currentUserId, otherUserId)
+        }
+    }
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.consumeError()
+        }
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(otherUserName, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)) },
@@ -54,8 +67,8 @@ fun ChatScreen(
                 text = messageText,
                 onTextChange = { messageText = it },
                 onSend = {
-                    if (messageText.isNotEmpty()) {
-                        viewModel.sendMessage(messageText, otherUserId)
+                    if (messageText.isNotEmpty() && currentUserId.isNotBlank()) {
+                        viewModel.sendMessage(currentUserId, messageText, otherUserId)
                         messageText = ""
                     }
                 }

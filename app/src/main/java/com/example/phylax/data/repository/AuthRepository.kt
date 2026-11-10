@@ -18,6 +18,17 @@ class AuthRepository(
 ) {
     fun getCurrentUser() = auth.currentUser
 
+    suspend fun getUserProfile(uid: String): User? {
+        return try {
+            val doc = firestore.collection("users").document(uid).get().await()
+            // Older profile documents may not contain a uid field. The
+            // authenticated UID is authoritative, so never return a blank one.
+            doc.toObject(User::class.java)?.copy(uid = uid)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun sendOtp(
         phoneNumber: String,
         activity: Activity,
@@ -53,7 +64,12 @@ class AuthRepository(
                 // Login: Fetch existing profile
                 withTimeout(10000) {
                     val doc = firestore.collection("users").document(uid).get().await()
-                    doc.toObject(User::class.java) ?: throw Exception("User profile not found")
+                    doc.toObject(User::class.java)?.copy(uid = uid) ?: run {
+                        // Create default profile if missing
+                        val defaultUser = User(uid = uid, name = "", phone = "", email = "")
+                        firestore.collection("users").document(uid).set(defaultUser).await()
+                        defaultUser
+                    }
                 }
             }
             
@@ -66,12 +82,7 @@ class AuthRepository(
     suspend fun registerWithEmail(user: User, password: String): Result<User> {
         return try {
             // 1. Try to create user
-            val result = try {
-                auth.createUserWithEmailAndPassword(user.email, password).await()
-            } catch (e: com.google.firebase.auth.FirebaseAuthUserCollisionException) {
-                // If user already exists (maybe from a previous timed-out attempt), try logging in
-                auth.signInWithEmailAndPassword(user.email, password).await()
-            }
+            val result = auth.createUserWithEmailAndPassword(user.email, password).await()
             
             val uid = result.user?.uid ?: ""
             
@@ -92,7 +103,11 @@ class AuthRepository(
             val uid = result.user?.uid ?: ""
             val user = withTimeout(10000) {
                 val doc = firestore.collection("users").document(uid).get().await()
-                doc.toObject(User::class.java) ?: throw Exception("User profile not found")
+                doc.toObject(User::class.java)?.copy(uid = uid) ?: run {
+                    val defaultUser = User(uid = uid, name = "", phone = "", email = email)
+                    firestore.collection("users").document(uid).set(defaultUser).await()
+                    defaultUser
+                }
             }
             Result.success(user)
         } catch (e: Exception) {

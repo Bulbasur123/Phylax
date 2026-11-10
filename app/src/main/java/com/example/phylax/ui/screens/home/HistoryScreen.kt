@@ -78,7 +78,7 @@ fun HistoryScreen(
                             session = session, 
                             onClick = { onRecordClick(session) },
                             onEditNote = { sessionToEdit = session },
-                            onDelete = { viewModel.deleteRecord(session.id) },
+                            onDelete = { viewModel.deleteRecord(session.id.orEmpty()) },
                             isLast = index == uiState.sessions.size - 1
                         )
                     }
@@ -92,7 +92,7 @@ fun HistoryScreen(
             initialNote = session.note,
             onDismiss = { sessionToEdit = null },
             onConfirm = { newNote ->
-                viewModel.updateNote(session.id, newNote)
+                viewModel.updateNote(session.id.orEmpty(), newNote)
                 sessionToEdit = null
             }
         )

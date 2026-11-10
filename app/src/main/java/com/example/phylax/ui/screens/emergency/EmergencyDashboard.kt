@@ -1,12 +1,12 @@
 package com.example.phylax.ui.screens.emergency
 
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,7 +21,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.phylax.ui.theme.*
 import com.example.phylax.service.SOSService
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 fun EmergencyDashboard(
@@ -31,6 +34,8 @@ fun EmergencyDashboard(
 ) {
     val context = LocalContext.current
     var timerSeconds by remember { mutableIntStateOf(0) }
+    val timerJob = remember { Job() }
+    val timerScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         val intent = Intent(context, SOSService::class.java).apply {
@@ -39,9 +44,15 @@ fun EmergencyDashboard(
         }
         ContextCompat.startForegroundService(context, intent)
 
-        while (true) {
-            delay(1000)
-            timerSeconds++
+        timerJob.invokeOnCompletion {
+            // timerScope cancelled when job completes
+        }
+        
+        timerScope.launch(timerJob) {
+            while (true) {
+                delay(1000)
+                timerSeconds++
+            }
         }
     }
 
@@ -52,7 +63,7 @@ fun EmergencyDashboard(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(iOSRed) // Urgency Red
+            .background(iOSRed)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -79,7 +90,6 @@ fun EmergencyDashboard(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // iOS Style Status Info
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             EmergencyStatusRow(
                 title = "Live Location",
@@ -95,30 +105,25 @@ fun EmergencyDashboard(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Actions
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             EmergencyActionButton(
-                text = "Emergency Services",
+                text = "Call Emergency (911)",
                 icon = Icons.Default.Phone,
                 color = Color.White,
                 contentColor = iOSRed,
-                onClick = {}
+                onClick = {
+                    val callIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:911"))
+                    callIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    context.startActivity(callIntent)
+                }
             )
             
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                EmergencyActionSquare(
-                    icon = Icons.Default.Map,
-                    label = "Map",
-                    onClick = onViewMap,
-                    modifier = Modifier.weight(1f)
-                )
-                EmergencyActionSquare(
-                    icon = Icons.AutoMirrored.Filled.Chat,
-                    label = "Chat",
-                    onClick = {},
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            EmergencyActionSquare(
+                icon = Icons.Default.Map,
+                label = "Map",
+                onClick = onViewMap,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -131,6 +136,7 @@ fun EmergencyDashboard(
                             action = SOSService.ACTION_STOP_SOS
                         }
                         context.startService(stopIntent)
+                        timerJob.cancel()
                         onStopSOS()
                     },
                 shape = RoundedCornerShape(20.dp),

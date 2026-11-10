@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,7 +26,6 @@ import com.example.phylax.ui.theme.*
 fun EmergencyContactsScreen(
     onContinue: () -> Unit,
     onBack: (() -> Unit)? = null,
-    onNavigateToChat: (String, String) -> Unit = { _, _ -> },
     viewModel: EmergencyContactsViewModel = viewModel()
 ) {
     val uiState = viewModel.uiState
@@ -86,15 +84,11 @@ fun EmergencyContactsScreen(
                 items(uiState.contacts) { contact ->
                     ContactCard(
                         contact = contact, 
-                        onDelete = { viewModel.deleteContact(contact.id) },
-                        onSetPrimary = { viewModel.setPrimaryContact(contact.id) },
+                        onDelete = { viewModel.deleteContact(contact.id.orEmpty()) },
+                        onSetPrimary = { viewModel.setPrimaryContact(contact.id.orEmpty()) },
                         onCall = {
                             val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${contact.phone}"))
                             context.startActivity(intent)
-                        },
-                        onMessage = {
-                            // Using phone as fallback ID for now
-                            onNavigateToChat(contact.phone, contact.name)
                         }
                     )
                 }
@@ -148,8 +142,7 @@ fun ContactCard(
     contact: EmergencyContact, 
     onDelete: () -> Unit,
     onSetPrimary: () -> Unit,
-    onCall: () -> Unit,
-    onMessage: () -> Unit
+    onCall: () -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -181,11 +174,7 @@ fun ContactCard(
                     Text(text = contact.phone, style = MaterialTheme.typography.bodyLarge.copy(color = SecondaryText))
                 }
                 
-                IconButton(onClick = onMessage) {
-                    Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = null, tint = LocationBlue)
-                }
-
-                IconButton(onClick = onCall) {
+IconButton(onClick = onCall) {
                     Icon(Icons.Default.Call, contentDescription = null, tint = LocationBlue)
                 }
             }

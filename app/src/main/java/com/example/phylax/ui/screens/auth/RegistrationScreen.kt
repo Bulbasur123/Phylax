@@ -1,9 +1,5 @@
 package com.example.phylax.ui.screens.auth
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,7 +29,7 @@ import com.example.phylax.ui.theme.*
 
 @Composable
 fun RegistrationScreen(
-    onOtpSent: (String) -> Unit,
+    onRegisterSuccess: () -> Unit,
     onLoginClick: () -> Unit,
     viewModel: AuthViewModel
 ) {
@@ -44,24 +40,13 @@ fun RegistrationScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-
-    // Helper to find Activity
-    fun findActivity(context: Context): Activity? {
-        var currentContext = context
-        while (currentContext is ContextWrapper) {
-            if (currentContext is Activity) return currentContext
-            currentContext = currentContext.baseContext
-        }
-        return null
-    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is AuthEvent.OtpSent -> onOtpSent(event.phoneNumber)
+                is AuthEvent.AuthSuccess -> onRegisterSuccess()
                 is AuthEvent.Error -> snackbarHostState.showSnackbar(event.message)
                 else -> {}
             }
@@ -141,12 +126,7 @@ fun RegistrationScreen(
                     if (name.isNotEmpty() && phone.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty()) {
                         if (password == confirmPassword) {
                             val user = User(name = name, phone = phone, email = email)
-                            val activity = findActivity(context)
-                            if (activity != null) {
-                                viewModel.onEvent(AuthUserEvent.SendOtp(phone, activity, user, password))
-                            } else {
-                                scope.launch { snackbarHostState.showSnackbar("Unable to start verification") }
-                            }
+                            viewModel.onEvent(AuthUserEvent.RegisterWithEmail(user, password))
                         } else {
                             scope.launch { snackbarHostState.showSnackbar("Passwords do not match") }
                         }
